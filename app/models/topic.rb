@@ -31,7 +31,7 @@ class Topic < ActiveRecord::Base
 
   include SentenceCase
   include Hashid::Rails
-  
+
   belongs_to :forum, counter_cache: true, touch: true
   belongs_to :user, counter_cache: true, touch: true
   belongs_to :doc, counter_cache: true, touch: true
@@ -82,6 +82,7 @@ class Topic < ActiveRecord::Base
   # may want to get rid of this filter:
   # before_save :check_for_private
   before_create :add_locale
+  after_save :notify_assignee, if: :assigned_user_id_changed?
 
   before_save :cache_user_name
   acts_as_taggable_on :tags, :teams
@@ -228,7 +229,6 @@ class Topic < ActiveRecord::Base
   end
 
   def self.merge_topics(topic_ids, user_id=2)
-
     @merge_topics = Topic.where(id: topic_ids)
     @topic = @merge_topics.first.dup
     @topic.name = "MERGED: #{@merge_topics.first.name}"
@@ -273,6 +273,13 @@ class Topic < ActiveRecord::Base
 
   def posts_in_last_minute
     self.posts.where(created_at: Time.now-1.minutes..Time.now, kind: 'reply').count
+  end
+
+  def notify_assignee
+    auto_assigned_on_response = self.posts.select{ |p| p.user.is_agent? }.count == 1
+
+    return true if !self.private or auto_assigned_on_response
+    NotificationMailer.ticket_assigned(self.id, self.assigned_user_id).deliver_later
   end
 
   private
