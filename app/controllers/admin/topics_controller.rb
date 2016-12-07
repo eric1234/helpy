@@ -137,6 +137,7 @@ class Admin::TopicsController < Admin::BaseController
     end
 
     @topics.bulk_agent_assign(bulk_post_attributes, assigned_user.id) if bulk_post_attributes.present?
+    NotificationMailer.ticket_assigned(params[:topic_ids], assigned_user.id).deliver_later
 
     ticketing_ui
   end
@@ -364,10 +365,10 @@ class Admin::TopicsController < Admin::BaseController
 
   protected
 
-  # renders out the ticketing UI, or that of a single ticket after 
+  # renders out the ticketing UI, or that of a single ticket after
   # an operation is completed
   def ticketing_ui
-    @updated_topics = @topics 
+    @updated_topics = @topics
     if params[:q].present?
       search_date_from_params
       search_topics
@@ -550,7 +551,7 @@ class Admin::TopicsController < Admin::BaseController
     else
       @topics = Topic.where(id: params[:topic_ids]).all
     end
-    
+
   end
 
   def get_tickets
