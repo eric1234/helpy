@@ -15,7 +15,7 @@ class NotificationMailer < ApplicationMailer
   end
 
   def ticket_assigned(topic_ids, assignee_id)
-    new_notification(topic_ids.first, User.where(id: assignee_id), topic_ids)
+    new_notification( topic_ids.first, User.where(id: assignee_id), Topic.where(id: topic_ids) )
   end
 
   private
@@ -30,7 +30,7 @@ class NotificationMailer < ApplicationMailer
     @user = @topic.user
     @recipient = notifiable_users.first
     @bcc = notifiable_users.last(notifiable_users.count-1).collect {|u| u.email}
-    @bulk = bulk_topics.count > 1 ? true : false
+    @bulk_topics = bulk_topics
     mail(
       to: @recipient.email,
       bcc: @bcc,
