@@ -137,7 +137,7 @@ class Admin::TopicsController < Admin::BaseController
     end
 
     @topics.bulk_agent_assign(bulk_post_attributes, assigned_user.id) if bulk_post_attributes.present?
-    NotificationMailer.ticket_assigned(params[:topic_ids], assigned_user.id).deliver_later
+    NotificationMailer.ticket_assigned(@topics.collect(&:id), assigned_user.id).deliver_later
 
     ticketing_ui
   end
